@@ -1,0 +1,17 @@
+#ifndef GLOBALDEFSH
+#define GLOBALDEFSH
+
+#define TRUE 1
+#define FALSE 0
+#define POSATTRIBLOC 0
+#define NORMATTRIBLOC 1
+#define TCATTRIBLOC 2
+#define TANGENTATTRIBLOC 3
+#define BLENDIATTRIBLOC 4
+#define BLENDWATTRIBLOC 5
+#define INSTANCEATTRIBLOC 6
+
+
+#include "types.h"
+
+#endif
