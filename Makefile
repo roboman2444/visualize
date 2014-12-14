@@ -28,4 +28,4 @@ purge:
 	@rm -f vidthing-profile
 	@rm -f ./*.gcda
 run: $(TARGET)
-	./vidthing
+	LD_LIBRARY_PATH=./bass/x64/:$LD_LIBRARY_PATH ./vidthing ./D*

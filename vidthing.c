@@ -450,61 +450,41 @@ myvao_t createWaveBuffer(const int x, const int y, const float scalex, const flo
 	return v;
 }
 GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7};
+GLenum dbuffers[] = {GL_DEPTH_ATTACHMENT};
 matrix4x4_t shadowcorrect;// = {{{0.5, 0.0, 0.0, 0.5},{0.0, 0.5, 0.0, 0.5},{0.0, 0.0, 0.5, 0.5},{0.0, 0.0, 0.5, 1.0}}};
 
 int otherinit(const unsigned int width, const unsigned int height){
 	glEnable(GL_TEXTURE_2D);
 
-/*	glGenFramebuffers(1, &shadow.id);
-	shadow.width = 512;
-	shadow.height = 512;
-	states_BindFramebuffer(shadow);
-	glGenRenderbuffers(1, &shadow.rbid);
-	glBindRenderbuffer(GL_RENDERBUFFER, shadow.rbid);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 1, GL_DEPTH24_STENCIL8, 512, 512);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, shadow.rbid);
-	//create texture here
-	glGenTextures(1, &shadow.textureid[0].id);
-	glBindTexture(GL_TEXTURE_2D, shadow.textureid[0].id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_R32F, GL_UNSIGNED_BYTE, NULL);
-	shadow.textureid[0].width = width;
-	shadow.textureid[0].height = height;
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//	glDrawBuffers(1, buffers);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, buffers[0], GL_TEXTURE_2D, shadow.textureid[0].id, 0);
-*/
 	states_BindFramebuffer(screen);
 	glGenFramebuffers(1, &fpscreen.id);
-	fpscreen.width = width;
-	fpscreen.height = height;
+	fpscreen.width = width * 2;
+	fpscreen.height = height * 2;
 	states_BindFramebuffer(fpscreen);
 	glBindFramebuffer(GL_FRAMEBUFFER, fpscreen.id);
 	glGenRenderbuffers(1, &fpscreen.rbid);
 	glBindRenderbuffer(GL_RENDERBUFFER, fpscreen.rbid);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fpscreen.width, fpscreen.height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fpscreen.rbid);
 	//create texture here
 	glGenTextures(1, &fpscreen.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, fpscreen.textureid[0].id);
-	fpscreen.textureid[0].width = width;
-	fpscreen.textureid[0].height = height;
+	fpscreen.textureid[0].width = fpscreen.width;
+	fpscreen.textureid[0].height = fpscreen.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, fpscreen.width, fpscreen.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glGenTextures(1, &fpscreen.textureid[1].id);
 	glBindTexture(GL_TEXTURE_2D, fpscreen.textureid[1].id);
-	fpscreen.textureid[1].width = width;
-	fpscreen.textureid[1].height = height;
+	fpscreen.textureid[1].width = fpscreen.width;
+	fpscreen.textureid[1].height = fpscreen.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, fpscreen.width, fpscreen.height, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
 
 	glDrawBuffers(2, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fpscreen.textureid[0].id, 0);
@@ -528,13 +508,13 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &lensout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensout.textureid[0].id);
-	lensout.textureid[0].width = width/8;
-	lensout.textureid[0].height = height/8;
+	lensout.textureid[0].width = lensout.width;
+	lensout.textureid[0].height = lensout.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width/8, height/8, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, lensout.width, lensout.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lensout.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", lensout.id, lensout.textureid[0].id);
@@ -558,14 +538,14 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &ssaoout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, ssaoout.textureid[0].id);
-	ssaoout.textureid[0].width = width;
-	ssaoout.textureid[0].height = height;
+	ssaoout.textureid[0].width = ssaoout.width;
+	ssaoout.textureid[0].height = ssaoout.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, ssaoout.width, ssaoout.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoout.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", ssaoout.id, ssaoout.textureid[0].id);
@@ -588,14 +568,14 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &bloomout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomout.textureid[0].id);
-	bloomout.textureid[0].width = width;
-	bloomout.textureid[0].height = height;
+	bloomout.textureid[0].width = bloomout.width;
+	bloomout.textureid[0].height = bloomout.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, bloomout.width, bloomout.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomout.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", bloomout.id, bloomout.textureid[0].id);
@@ -616,14 +596,14 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &bloomv.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomv.textureid[0].id);
-	bloomv.textureid[0].width = width/4;
-	bloomv.textureid[0].height = height/4;
+	bloomv.textureid[0].width = bloomv.width;
+	bloomv.textureid[0].height = bloomv.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width/4, height/4, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, bloomv.width, bloomv.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomv.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", bloomv.id, bloomv.textureid[0].id);
@@ -641,14 +621,14 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &bloomh.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomh.textureid[0].id);
-	bloomh.textureid[0].width = width/4;
-	bloomh.textureid[0].height = height/4;
+	bloomh.textureid[0].width = bloomh.width;
+	bloomh.textureid[0].height = bloomh.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width/4, height/4, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, bloomh.width, bloomh.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomh.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", bloomh.id, bloomh.textureid[0].id);
@@ -670,14 +650,14 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &dofout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, dofout.textureid[0].id);
-	dofout.textureid[0].width = width;
-	dofout.textureid[0].height = height;
+	dofout.textureid[0].width = dofout.width;
+	dofout.textureid[0].height = dofout.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, dofout.width, dofout.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dofout.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", dofout.id, dofout.textureid[0].id);
@@ -689,23 +669,30 @@ int otherinit(const unsigned int width, const unsigned int height){
 	shadow.height = 512;
 	states_BindFramebuffer(shadow);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadow.id);
-	glGenRenderbuffers(1, &shadow.rbid);
-	glBindRenderbuffer(GL_RENDERBUFFER, shadow.rbid);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 512, 512);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, shadow.rbid);
+//	glGenRenderbuffers(1, &shadow.rbid);
+//	glBindRenderbuffer(GL_RENDERBUFFER, shadow.rbid);
+//	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, shadow.width, shadow.height);
+//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, shadow.rbid);
 	//create texture here
 	glGenTextures(1, &shadow.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, shadow.textureid[0].id);
-	shadow.textureid[0].width = 512;
-	shadow.textureid[0].height = 512;
+	shadow.textureid[0].width = shadow.width;
+	shadow.textureid[0].height = shadow.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
-	glDrawBuffers(1, buffers);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow.textureid[0].id, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadow.width, shadow.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadow.width, shadow.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+//	glDrawBuffers(1, dbuffers);
+//	glDrawBuffer
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow.textureid[0].id, 0);
+//	glDrawBuffer(GL_NONE);
+//	glReadBuffer(GL_NONE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", shadow.id, shadow.textureid[0].id);
 
 
@@ -722,13 +709,13 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &lensoutblurh.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensoutblurh.textureid[0].id);
-	lensoutblurh.textureid[0].width = width/8;
-	lensoutblurh.textureid[0].height = height/8;
+	lensoutblurh.textureid[0].width = lensoutblurh.width;
+	lensoutblurh.textureid[0].height = lensoutblurh.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width/8, height/8, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, lensoutblurh.width, lensoutblurh.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lensoutblurh.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", lensoutblurh.id, lensoutblurh.textureid[0].id);
@@ -746,13 +733,13 @@ int otherinit(const unsigned int width, const unsigned int height){
 	//create texture here
 	glGenTextures(1, &lensoutblurv.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensoutblurv.textureid[0].id);
-	lensoutblurv.textureid[0].width = width/8;
-	lensoutblurv.textureid[0].height = height/8;
+	lensoutblurv.textureid[0].width = lensoutblurv.width;
+	lensoutblurv.textureid[0].height = lensoutblurv.height;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width/8, height/8, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, lensoutblurv.width, lensoutblurv.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lensoutblurv.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", lensoutblurv.id, lensoutblurv.textureid[0].id);
@@ -807,7 +794,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 	shadowcorrect.m[3][3] = 1.0;
 	shadowcorrect.m[3][0] = 0.5;
 	shadowcorrect.m[3][1] = 0.5;
-	shadowcorrect.m[3][2] = 0.39;
+	shadowcorrect.m[3][2] = 0.499;
 //	shadowcorrect.m[3][2] = 0.5;
 
 	glBlendFunc(GL_ONE, GL_ONE);
@@ -823,8 +810,8 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 int main(int argc, char ** argv){
 		float scount = 0.0;
-	int width = 1280;
-	int height = 720;
+	int width = 1920;
+	int height = 1080;
 	char * filename = "./song.mp3";
 	if(argc < 2){
 		printf("no file dumbass, using default ./song.mp3\n");
@@ -1108,8 +1095,8 @@ int main(int argc, char ** argv){
 		states_bindVao(fsquad);
 		states_useProgram(dofshader.programid);
 		glDrawElements(GL_TRIANGLES, fsquad.numfaces * 3, GL_UNSIGNED_INT, 0);
-*/
 
+*/
 		states_BindFramebuffer(screen);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //		glBindTexture(GL_TEXTURE_2D, dofout.textureid[0].id);
@@ -1121,8 +1108,8 @@ int main(int argc, char ** argv){
 		glBindTexture(GL_TEXTURE_2D, lensoutblurh.textureid[0].id);
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, lensstar.id);
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, bloomh.textureid[0].id);
+//		glActiveTexture(GL_TEXTURE4);
+//		glBindTexture(GL_TEXTURE_2D, bloomh.textureid[0].id);
 		states_useProgram(lenscombine.programid);
 		glDrawElements(GL_TRIANGLES, fsquad.numfaces * 3, GL_UNSIGNED_INT, 0);
 		glActiveTexture(GL_TEXTURE0);

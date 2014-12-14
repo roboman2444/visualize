@@ -31,8 +31,10 @@ float garea = 2.0;
 
 void main(){
 //	fragColor = texture(texture0, fragtexcoord);
+//	float depth = readDepth(vec2(0.5));
 	float depth = readDepth(fragtexcoord);
-	float factor = max(abs(depth - readDepth(fragtexcoord + (vec2(0.5)-fragtexcoord))) - coc, 0);
+//	float factor = max(abs(depth - readDepth(vec2(0.5)))) - coc, 0);
+	float factor = 50.0;
         vec2 dofblur = vec2 (clamp( factor * bias, -blurclamp, blurclamp ));
 
         vec4 col = texture(texture0, fragtexcoord);
