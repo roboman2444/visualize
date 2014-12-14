@@ -690,8 +690,8 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glDrawBuffers(1, dbuffers);
 //	glDrawBuffer
 //	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadow.textureid[0].id, 0);
-//	glDrawBuffer(GL_NONE);
-//	glReadBuffer(GL_NONE);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", shadow.id, shadow.textureid[0].id);
 
