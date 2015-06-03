@@ -1,23 +1,24 @@
-#version 150
+#version 330
+in vec2 posattrib;
 
-uniform float unifloat0;
-uniform mat4 unimat40;
-uniform mat4 unimat41;
-in vec3 posattrib;
-in vec2 tcattrib;
-out vec3 fragposition;
-out vec3 frageh;
-out vec2 fragtexcoord;
+#define N 512
+
+layout (std140) uniform uniblock0{
+        float data[N];
+} uniblock0_t;
 
 
-out vec4 sspace;
-
+out VS_OUT {
+	flat ivec2 bp;
+} vs_out;
 
 void main(){
-	vec4 newpos = vec4(posattrib.xy, posattrib.z * unifloat0, 1.0);
-	gl_Position = unimat40 * newpos;
-	fragposition = gl_Position.xyz;
-	frageh = vec3(posattrib.z*5.0, 1.0-posattrib.z*5.0, 0.0);
-	fragtexcoord = tcattrib;
-	sspace  = unimat41 *newpos;
+//	gl_Position = unimat40 *
+///	float myheight = 
+//	vec4 newpos = vec4(posattrib.xy, uniblock0.data[ * unifloat0, 1.0);
+//	gl_Position = unimat40 * newpos;
+//	fragposition = gl_Position.xyz;
+//	frageh = vec3(posattrib.z*5.0, 1.0-posattrib.z*5.0, 0.0);
+//	sspace  = unimat41 *newpos;
+	vs_out.bp = ivec2(posattrib);
 }

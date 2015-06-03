@@ -78,4 +78,5 @@ void main(){
 	fragColor *= diff;
 
 
+
 }

@@ -48,8 +48,10 @@ shader_t compileShader(const char * filename){
 	shader_t s = {0};
 	unsigned int filenamesize = strlen(filename);
 	char * vertname = malloc(filenamesize + 6);
+	char * geomname = malloc(filenamesize + 6);
 	char * fragname = malloc(filenamesize + 6);
 	sprintf(vertname, "%s.vert", filename);
+	sprintf(geomname, "%s.geom", filename);
 	sprintf(fragname, "%s.frag", filename);
 
 	FILE *ff = fopen(fragname, "r");
@@ -71,31 +73,64 @@ shader_t compileShader(const char * filename){
 		if(ff) fclose(ff);
 		return s;
 	}
+	FILE *fg = fopen(geomname, "r");
+	int glength = 0;
+	if(fg){
+		fseek(fg, 0, SEEK_END);
+		glength = ftell(fg);
+		rewind(fg);
+//		if(!glength) fclose(fg);
+	}
 	char *vertstring = malloc(vlength+1);
 //	vertstring[vlength] = 0;
 	memset(vertstring, 0, vlength+1);
 	fread(vertstring, 1, vlength, fv);
+	if(fv)fclose(fv);
 	char *fragstring = malloc(flength+1);
 //	fragstring[flength] = 0;
 	memset(fragstring, 0, flength+1);
 	fread(fragstring, 1, flength, ff);
-	fclose(fv);
-	fclose(ff);
+	if(ff)fclose(ff);
+	char *geomstring = 0;
+	if(glength){
+		geomstring = malloc(glength+1);
+		memset(geomstring, 0, glength+1);
+		fread(geomstring, 1, glength, fg);
+	}
+	if(fg)fclose(fg);
+
+
+
+	printf("shader lengths %i, %i, %i\n", vlength, flength, glength);
+
 
 	GLuint vertid = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragid = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(vertid, 1, (const GLchar **) &vertstring, &vlength);
-	glShaderSource(fragid, 1, (const GLchar **) &fragstring, &flength);
-//	printf("vertex shader:\n%s\n", vertstring);
-//	printf("fragment shader:\n%s\n", fragstring);
+	glCompileShader(vertid);
+//	printf("vert shader contents :\n%s\n\n\n\n", vertstring);
 	if(vertstring) free(vertstring);
+
+	GLuint fragid = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragid, 1, (const GLchar **) &fragstring, &flength);
+	glCompileShader(fragid);
+//	printf("frag shader contents :\n%s\n\n\n\n", fragstring);
 	if(fragstring) free(fragstring);
 
-	glCompileShader(vertid);
-	glCompileShader(fragid);
+
+
+	GLuint geomid = 0;
+	if(glength) {
+		geomid = glCreateShader(GL_GEOMETRY_SHADER);
+		glShaderSource(geomid, 1, (const GLchar **) &geomstring, &glength);
+		glCompileShader(geomid);
+	}
+	if(geomstring) printf("Geometry shader length %i,contents :\n%s\n\n\n\n", glength ,geomstring);
+	if(geomstring) free(geomstring);
+
+	printf("shader ids %i, %i, %i\n", vertid, fragid, geomid);
+
+
 	int fail = 0;
-	printf("shader ids %i, %i\n", vertid, fragid);
-	printf("shader lengths %i, %i\n", vlength, flength);
 
 	int status = 0;
 	glGetShaderiv(fragid, GL_COMPILE_STATUS, &status);
@@ -110,8 +145,17 @@ shader_t compileShader(const char * filename){
 		printf("vert shader compile problem\n");
 		shader_printShaderLogStatus(vertid);
 	}
+	if(glength){
+		glGetShaderiv(geomid, GL_COMPILE_STATUS, &status);
+		if(status == GL_FALSE){
+			fail = TRUE;
+			printf("geom shader compile problem\n");
+			shader_printShaderLogStatus(geomid);
+		}
+	}
 	GLuint programid = glCreateProgram();
 	glAttachShader(programid, vertid);
+	if(glength)glAttachShader(programid, geomid);
 	glAttachShader(programid, fragid);
 //	if(!fail){
 		glBindFragDataLocation(programid, 0, "fragColor");
@@ -125,6 +169,7 @@ shader_t compileShader(const char * filename){
 //	}
 	glLinkProgram(programid);
 	glDeleteShader(vertid);
+	if(glength)glDeleteShader(geomid);
 	glDeleteShader(fragid);
 	glGetProgramiv(programid, GL_LINK_STATUS, &status);
 	if(status == GL_FALSE) fail = TRUE;
@@ -149,6 +194,7 @@ shader_t compileShader(const char * filename){
 	s.unifloat0 = glGetUniformLocation(programid, "unifloat0");
 	s.univec40 = glGetUniformLocation(programid, "univec40");
 	s.univec30 = glGetUniformLocation(programid, "univec30");
+	s.univec31 = glGetUniformLocation(programid, "univec31");
 	s.univec20 = glGetUniformLocation(programid, "univec20");
 	s.uniint0 = glGetUniformLocation(programid, "uniint0");
 	s.uniscreensizefix = glGetUniformLocation(programid, "uniscreensizefix");
@@ -158,6 +204,5 @@ shader_t compileShader(const char * filename){
 	s.uniblock1 = glGetUniformLocation(programid, "uniblock1");
 	if(s.uniblock1 > -1) glUniformBlockBinding(programid, s.uniblock0, 1);
 	printf("Shader %s compile successful\n", filename);
-
 	return s;
 }

@@ -210,6 +210,7 @@ shader_t fsblurh;
 shader_t fsblurv;
 shader_t lensflare;
 shader_t waveshader;
+shader_t waveshadowshader;
 shader_t stdmodelshader;
 shader_t lenscombine;
 shader_t ssaoshader;
@@ -244,6 +245,7 @@ camera_t shadowcam;
 texture_t lenscolor;
 texture_t lensdirt;
 texture_t lensstar;
+texture_t waved;
 #define MAX_DIA 16
 typedef struct diamond_s {
 	float angle;
@@ -333,40 +335,40 @@ void diamondRender(camera_t *c){
 	}
 }
 void updateWaveBuffer(float * inbuffer){
-
 	int ix, iy;
 	for(iy = wavey; iy > 0; iy--){
 	for(ix = wavex; ix > 0; ix--){
-		wavebuffer[((((iy) * wavex) + ix) * 3) +2] =
-		wavebuffer[((((iy-1) * wavex) + ix) * 3) +2];
+		wavebuffer[iy * wavex + ix] = wavebuffer[(iy-1)*wavex + ix];
 	}}
-
 	int i;
 	for(i = 0; i < wavex; i++){
-//		wavebuffert[(i*3)+2] = inbuffer[i] * 0.1;
-		wavebuffer[(i*3)+2] = inbuffer[i] * sqrt(sqrt((float)i));
+		wavebuffer[i] = inbuffer[i] * sqrt((float)i);
 	}
-
-
-
 	waveneedpush = TRUE;
 }
 void pushWaveBuffer(void){
-	states_bindVao(waveback);
-	glBindBuffer(GL_ARRAY_BUFFER, waveback.posid);
-	glBufferData(GL_ARRAY_BUFFER, waveback.numverts * 3* sizeof(GLfloat), wavebuffer, GL_STREAM_DRAW);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, waved.id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, wavex, wavey, 0, GL_RED, GL_FLOAT, wavebuffer);
+
+
+
+	//states_bindVao(waveback);
+//	glBindBuffer(GL_UNIFORM_BUFFER, waveback.normid);
+//	glBufferData(GL_UNIFORM_BUFFER, waveback.numverts * sizeof(GLfloat), wavebuffer, GL_STREAM_DRAW);
 	waveneedpush = FALSE;
 }
-void renderWave(camera_t *mycam, float smult){
+void renderWave(camera_t *mycam, float scalex, float scaley, float smult){
 		states_useProgram(waveshader.programid);
 		GLfloat mout[16];
 		Matrix4x4_ToArrayFloatGL(&mycam->viewproj, mout);
 		glUniformMatrix4fv(waveshader.unimat40, 1, GL_FALSE, mout);
 //		glUniform1f(waveshader.unifloat0, 1.0);
-		glUniform1f(waveshader.unifloat0, smult);
+		glUniform3f(waveshader.univec30, scalex, scaley, smult);
+		glUniform2i(waveshader.univec20, wavex, wavey);
 		states_bindVao(waveback);
 		if(waveneedpush) pushWaveBuffer();
-		glDrawElements(GL_TRIANGLES, waveback.numfaces * 3, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_POINTS, 0, waveback.numfaces);
 }
 myvao_t createFSQuad(void){
 	myvao_t v;
@@ -397,54 +399,39 @@ myvao_t createFSQuad(void){
 }
 myvao_t createWaveBuffer(const int x, const int y, const float scalex, const float scaley){
 	printf("y, %i\n", y);
+	int fx = x-1;
+	int fy = y-1;
+	unsigned int numfaces = fy * fx;
 	wavex = x;
 	wavey = y;
 	myvao_t v;
-	unsigned int numverts = x * y;
-	wavebuffer = malloc(numverts * 3 * sizeof(GLfloat));
-	wavebuffert = malloc(numverts * 3 * sizeof(GLfloat));
+	wavebuffert = malloc(numfaces * 2 * sizeof(GLfloat));
+	wavebuffer = malloc(x * y  * sizeof(GLfloat));
+	memset(wavebuffert, 0, numfaces * sizeof(GLfloat));
+	memset(wavebuffer, 0, x * y * sizeof(GLfloat));
+//	wavebuffert = malloc(numverts * 3 * sizeof(GLfloat));
 	int ix;
 	int iy;
-	for(iy = 0; iy < y; iy++){
-	for(ix = 0; ix < x; ix++){
-		wavebuffer[((iy * x) + ix) * 3] = (((float) ix/(float)x) - 0.5) * scalex * 2.0;
-		wavebuffer[(((iy * x) + ix) * 3)+  1] = (((float) iy/(float)y) - 0.5) * scaley * 2.0;
-		wavebuffer[(((iy * x) + ix) * 3) + 2] = 0.0f;
-//		wavebuffer[(((iy * x) + ix) * 3) + 2] = sin(iy /30.0);
-	}}
-	memcpy(wavebuffert, wavebuffer, numverts * 3 * sizeof(GLfloat));
-
-	int fx = x-1;
-	int fy = y-1;
-	unsigned int numfaces = fy * fx * 2;
-	GLuint * facebuffer = malloc(numfaces * 3 * sizeof(GLuint));
 	for(iy = 0; iy < fy; iy++){
 	for(ix = 0; ix < fx; ix++){
-		unsigned int topleft = (iy * x) + ix;
-		unsigned int topright = topleft + 1;
-		unsigned int bottomright = topright + x;
-		unsigned int bottomleft = topleft + x;
-		GLuint *fb =&facebuffer[((iy *fx) +ix) * 6];
-		fb[0] = bottomleft;
-		fb[1] = topleft;
-		fb[2] = topright;
-		fb[3] = bottomleft;
-		fb[4] = topright;
-		fb[5] = bottomright;
+		wavebuffert[((iy * fx + ix) * 2)+0] = (float)ix;
+		wavebuffert[((iy * fx + ix) * 2)+1] = (float)iy;
 
 	}}
 	glGenVertexArrays(1, &v.vaoid);
 	glBindVertexArray(v.vaoid);
 	glGenBuffers(1, &v.posid);
+	glGenBuffers(1, &v.normid);
 	glBindBuffer(GL_ARRAY_BUFFER, v.posid);
-	glBufferData(GL_ARRAY_BUFFER, numverts * 3* sizeof(GLfloat), wavebuffer, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, numfaces * 2* sizeof(GLfloat), wavebuffert, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(POSATTRIBLOC);
-	glVertexAttribPointer(POSATTRIBLOC, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void *) 0);
-	glGenBuffers(1, &v.faceid);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, v.faceid);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, numfaces * 3 * sizeof(GLuint), facebuffer, GL_STREAM_DRAW);
+	glVertexAttribPointer(POSATTRIBLOC, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void *) 0);
+	free(wavebuffert);
+//	glGenBuffers(1, &v.faceid);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, v.faceid);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, numfaces * 3 * sizeof(GLuint), facebuffer, GL_STREAM_DRAW);
 
-	v.numverts = numverts;
+	v.numverts = x * y;
 	v.numfaces = numfaces;
 
 	return v;
@@ -456,10 +443,21 @@ matrix4x4_t shadowcorrect;// = {{{0.5, 0.0, 0.0, 0.5},{0.0, 0.5, 0.0, 0.5},{0.0,
 int otherinit(const unsigned int width, const unsigned int height){
 	glEnable(GL_TEXTURE_2D);
 
+
+	glGenTextures(1, &waved.id);
+	glBindTexture(GL_TEXTURE_2D, waved.id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, wavex, wavey, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+	waved.width = wavex;
+	waved.height = wavey;
+
 	states_BindFramebuffer(screen);
 	glGenFramebuffers(1, &fpscreen.id);
-	fpscreen.width = width * 2;
-	fpscreen.height = height * 2;
+	fpscreen.width = width;
+	fpscreen.height = height;
 	states_BindFramebuffer(fpscreen);
 	glBindFramebuffer(GL_FRAMEBUFFER, fpscreen.id);
 	glGenRenderbuffers(1, &fpscreen.rbid);
@@ -748,6 +746,8 @@ int otherinit(const unsigned int width, const unsigned int height){
 	screen.width = width;
 	screen.height = height;
 	screen.id = 0;
+	waveshader = compileShader("waveback");
+	waveshadowshader = compileShader("waveshadow");
 	shadowshader = compileShader("shadow");
 	ssaoshader = compileShader("ssao");
 	dofshader = compileShader("dof");
@@ -759,7 +759,6 @@ int otherinit(const unsigned int width, const unsigned int height){
 	stdmodelshader = compileShader("stdmodel");
 	lensflare = compileShader("lensflare");
 	lightsmodel = compileShader("lightsmodel");
-	waveshader = compileShader("waveback");
 	unitcube = loadModelIQM("unitcube.iqm");
 	diamond = loadModelIQM("diamond.iqm");
 	lightmodel = loadModelIQM("light.iqm");
@@ -774,6 +773,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 	shadowcam = createcam();
 	vec3_t newpos = {0.0, 0.0, 4.0};
 	shadowcam.angle[2] = 0.0;
+	tempcam.far = 100.0;
 	tempcam = cam;
 	tempcam.near = 0.1f;
 	tempcam.aspect = (float)width/(float)height;
@@ -810,8 +810,8 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 int main(int argc, char ** argv){
 		float scount = 0.0;
-	int width = 1920;
-	int height = 1080;
+	int width = 800;
+	int height = 600;
 	char * filename = "./song.mp3";
 	if(argc < 2){
 		printf("no file dumbass, using default ./song.mp3\n");
@@ -865,7 +865,6 @@ int main(int argc, char ** argv){
 		accum += delta;
 		bpmaccum += delta;
 		while(accum > GCTIMESTEP){
-
 			float fftdata[256];
 			BASS_ChannelGetData(bstream, fftdata, BASS_DATA_FFT512);
 			int i;
@@ -950,11 +949,18 @@ int main(int argc, char ** argv){
 			accum-=GCTIMESTEP;
 		}
 //		nope
+
+
 		glEnable(GL_DEPTH_TEST);
 		int i;
 		GLfloat mout[16];
 		states_BindFramebuffer(shadow);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if(waveneedpush) pushWaveBuffer();
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, waved.id);
+
 		states_useProgram(shadowshader.programid);
 		glUniform1f(shadowshader.unifloat0, 1.0);
 		states_bindVao(diamond);
@@ -965,15 +971,22 @@ int main(int argc, char ** argv){
 			glUniformMatrix4fv(shadowshader.unimat40, 1, GL_FALSE, mout);
 			glDrawElements(GL_TRIANGLES, diamond.numfaces * 3, GL_UNSIGNED_INT, 0);
 		}
+
+		states_useProgram(waveshadowshader.programid);
 		Matrix4x4_ToArrayFloatGL(&shadowcam.viewproj, mout);
-		glUniformMatrix4fv(shadowshader.unimat40, 1, GL_FALSE, mout);
-		glUniform1f(shadowshader.unifloat0, smult);
+		glUniformMatrix4fv(waveshadowshader.unimat40, 1, GL_FALSE, mout);
+//		glUniform1f(waveshader.unifloat0, 1.0);
+		glUniform3f(waveshadowshader.univec30, 0.03, 0.03, smult);
+		glUniform2i(waveshadowshader.univec20, wavex, wavey);
 		states_bindVao(waveback);
-		if(waveneedpush) pushWaveBuffer();
-		glDrawElements(GL_TRIANGLES, waveback.numfaces * 3, GL_UNSIGNED_INT, 0);
+//		if(waveneedpush) pushWaveBuffer();
+//		glDrawElements(GL_POINTS, waveback.numfaces, GL_UNSIGNED_INT, 0);
+//		printf("%i\n", waveback.numfaces);
+		glDrawArrays(GL_POINTS, 0, waveback.numfaces);
 
 
 
+//			printf("got here\n");
 
 		states_BindFramebuffer(fpscreen);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1017,10 +1030,18 @@ int main(int argc, char ** argv){
 		Matrix4x4_ToArrayFloatGL(&cam.viewproj, mout);
 		glUniformMatrix4fv(waveshader.unimat40, 1, GL_FALSE, mout);
 //		glUniform1f(waveshader.unifloat0, 1.0);
-		glUniform1f(waveshader.unifloat0, smult);
+		glUniform3f(waveshader.univec30, 0.03, 0.03, smult);
+		glUniform3fv(waveshader.univec31, 1, shadowcam.pos);
+		glUniform2i(waveshader.univec20, wavex, wavey);
 		states_bindVao(waveback);
-		if(waveneedpush) pushWaveBuffer();
-		glDrawElements(GL_TRIANGLES, waveback.numfaces * 3, GL_UNSIGNED_INT, 0);
+//		if(waveneedpush) pushWaveBuffer();
+//		glDrawElements(GL_POINTS, waveback.numfaces, GL_UNSIGNED_INT, 0);
+//		printf("%i\n", waveback.numfaces);
+		glDrawArrays(GL_POINTS, 0, waveback.numfaces);
+
+
+
+
 
 
 		glDisable(GL_DEPTH_TEST);

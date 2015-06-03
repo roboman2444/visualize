@@ -9,6 +9,7 @@ typedef struct shader_s {
 	GLuint unimat41;
 	GLuint univec40;
 	GLuint univec30;
+	GLuint univec31;
 	GLuint univec20;
 	GLuint uniint0;
 	GLuint uniscreensizefix;
