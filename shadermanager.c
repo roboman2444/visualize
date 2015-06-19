@@ -195,6 +195,7 @@ shader_t compileShader(const char * filename){
 	s.univec40 = glGetUniformLocation(programid, "univec40");
 	s.univec30 = glGetUniformLocation(programid, "univec30");
 	s.univec31 = glGetUniformLocation(programid, "univec31");
+	s.univec32 = glGetUniformLocation(programid, "univec32");
 	s.univec20 = glGetUniformLocation(programid, "univec20");
 	s.uniint0 = glGetUniformLocation(programid, "uniint0");
 	s.uniscreensizefix = glGetUniformLocation(programid, "uniscreensizefix");

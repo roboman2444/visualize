@@ -3,6 +3,7 @@
 uniform sampler2DShadow texture0;
 uniform sampler2DShadow texture1;
 uniform vec3 univec31;
+uniform vec3 univec32;
 in vec3 fragposition;
 in vec3 worldpos;
 //in vec2 fragtexcoord;
@@ -33,9 +34,14 @@ void main(){
 
 
 		vec3 lightdelta = univec31 - worldpos;
+		vec3 camdelta = univec32 - worldpos;
 		vec3 lightnorm = normalize(lightdelta);
-		float diffuse = dot(lightnorm, norm);
-		fragColor = diffuse * vec4(fragh,1.0) * max(fed,0.0);
+		vec3 camnorm = normalize(camdelta);
+		vec3 vhalf = normalize(lightnorm + camnorm);
+
+		float diffuse = clamp(dot(lightnorm, norm), 0.0, 1.0);
+		float spec = clamp(pow(dot(norm, vhalf), 100.0), 0.0, 1.0);
+		fragColor = (diffuse+spec) * vec4(fragh,1.0) * max(fed,0.0);
 		fragColor += 0.1 * vec4(fragh,1.0);
 
 }

@@ -343,6 +343,7 @@ void updateWaveBuffer(float * inbuffer){
 	int i;
 	for(i = 0; i < wavex; i++){
 		wavebuffer[i] = inbuffer[i] * sqrt((float)i);
+//		wavebuffer[i] = inbuffer[i] * (float)i;
 	}
 	waveneedpush = TRUE;
 }
@@ -1032,6 +1033,7 @@ int main(int argc, char ** argv){
 //		glUniform1f(waveshader.unifloat0, 1.0);
 		glUniform3f(waveshader.univec30, 0.03, 0.03, smult);
 		glUniform3fv(waveshader.univec31, 1, shadowcam.pos);
+		glUniform3fv(waveshader.univec32, 1, cam.pos);
 		glUniform2i(waveshader.univec20, wavex, wavey);
 		states_bindVao(waveback);
 //		if(waveneedpush) pushWaveBuffer();
