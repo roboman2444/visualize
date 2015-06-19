@@ -69,7 +69,7 @@ void main(){
 	gl_Position = unimat40 * p1;
 	worldpos = vec3(p1);
 	fragposition = gl_Position.xyz;
-	fragh = vec3(jet.z*5.0, 1.0-jet.z*5.0, 0.0);
+	fragh = vec3(jet.x*5.0, 1.0-jet.x*5.0, 0.0);
 	sspace = unimat41 * p1;
 	norm = norm1;
 	EmitVertex(); //bottom right
@@ -79,7 +79,7 @@ void main(){
 	gl_Position = unimat40 * p2;
 	worldpos = vec3(p2);
 	fragposition = gl_Position.xyz;
-	fragh = vec3(jet.x*5.0, 1.0-jet.x*5.0, 0.0);
+	fragh = vec3(jet.z*5.0, 1.0-jet.z*5.0, 0.0);
 	sspace = unimat41 * p2;
 	norm = norm1;
 	EmitVertex();// top left
