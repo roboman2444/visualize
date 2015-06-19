@@ -1,5 +1,5 @@
 #version 330
-#extension GL_ARB_gpu_shader5 : enable
+//#extension GL_ARB_gpu_shader5 : enable
 layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 
