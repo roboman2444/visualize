@@ -1,7 +1,7 @@
 CC = gcc
-LDFLAGS = -lGL -lGLU -lGLEW `sdl-config --libs` -lm -ldl -L./bass/x64/ -lbass
-CFLAGS = -Wall -O3 `sdl-config --cflags` -fstrict-aliasing -fprofile-use -I./bass/
-OBJECTS = vidthing.o shadermanager.o texturemanager.o matrixlib.o framebuffermanager.o camera.o
+LDFLAGS = -lGL -lGLU -lGLEW -lglfw -lm -ldl -L./bass/x64/ -lbass
+CFLAGS = -Wall -Ofast -lglfw -fstrict-aliasing -fprofile-use -I./bass/
+OBJECTS = vidthing.o shadermanager.o texturemanager.o matrixlib.o framebuffermanager.o camera.o glfwmanager.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<

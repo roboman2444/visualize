@@ -5,20 +5,31 @@
 #include <signal.h>
 #include "vidthing.h"
 #include "types.h"
+//end SDL stuff
+//begin GLinit Stuff
+#include <GL/glew.h>
+#include <GL/gl.h>
 
 
+#include "glfwmanager.h"
+
+extern double glfwGetTime(void);
 
 //start SDL stuff
 #include <signal.h>
-#include "SDL.h"
 void quit_handler(int sig){
-	SDL_Quit();
+//	SDL_Quit();
+	glfw_shutdown();
 	exit(FALSE);
 }
+/*
 SDL_Surface *sdlsurf;
 const SDL_VideoInfo *videoInfo;
 int videoFlags = SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_RESIZABLE;
 int initSDL(int width, int height){
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
 	if(SDL_Init(SDL_INIT_VIDEO)<0){
 		printf("sdl failed to init %s\n", SDL_GetError());
 		return FALSE;
@@ -27,6 +38,9 @@ int initSDL(int width, int height){
 	if(videoInfo->hw_available) videoFlags |= SDL_HWSURFACE;
 	else			    videoFlags |= SDL_SWSURFACE;
 	if(videoInfo->blit_hw)	    videoFlags |= SDL_HWACCEL;
+
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	sdlsurf = SDL_SetVideoMode(width, height, 24, videoFlags);
 	if(!sdlsurf){
@@ -38,10 +52,7 @@ int initSDL(int width, int height){
 	signal(SIGQUIT, &quit_handler);
 	return TRUE;
 }
-//end SDL stuff
-//begin GLinit Stuff
-#include <GL/glew.h>
-#include <GL/gl.h>
+*/
 
 int glInit(void){
 	GLenum glewError = glewInit();
@@ -441,11 +452,11 @@ GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHM
 GLenum dbuffers[] = {GL_DEPTH_ATTACHMENT};
 matrix4x4_t shadowcorrect;// = {{{0.5, 0.0, 0.0, 0.5},{0.0, 0.5, 0.0, 0.5},{0.0, 0.0, 0.5, 0.5},{0.0, 0.0, 0.5, 1.0}}};
 
-int otherinit(const unsigned int width, const unsigned int height){
+int otherinit(const unsigned int width, const unsigned int height, int second){
 	glEnable(GL_TEXTURE_2D);
 
 
-	glGenTextures(1, &waved.id);
+	if(!second) glGenTextures(1, &waved.id);
 	glBindTexture(GL_TEXTURE_2D, waved.id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -456,17 +467,17 @@ int otherinit(const unsigned int width, const unsigned int height){
 	waved.height = wavey;
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &fpscreen.id);
+	if(!second) glGenFramebuffers(1, &fpscreen.id);
 	fpscreen.width = width;
 	fpscreen.height = height;
 	states_BindFramebuffer(fpscreen);
 	glBindFramebuffer(GL_FRAMEBUFFER, fpscreen.id);
-	glGenRenderbuffers(1, &fpscreen.rbid);
+	if(!second) glGenRenderbuffers(1, &fpscreen.rbid);
 	glBindRenderbuffer(GL_RENDERBUFFER, fpscreen.rbid);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fpscreen.width, fpscreen.height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fpscreen.rbid);
 	//create texture here
-	glGenTextures(1, &fpscreen.textureid[0].id);
+	if(!second) glGenTextures(1, &fpscreen.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, fpscreen.textureid[0].id);
 	fpscreen.textureid[0].width = fpscreen.width;
 	fpscreen.textureid[0].height = fpscreen.height;
@@ -475,7 +486,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, fpscreen.width, fpscreen.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glGenTextures(1, &fpscreen.textureid[1].id);
+	if(!second) glGenTextures(1, &fpscreen.textureid[1].id);
 	glBindTexture(GL_TEXTURE_2D, fpscreen.textureid[1].id);
 	fpscreen.textureid[1].width = fpscreen.width;
 	fpscreen.textureid[1].height = fpscreen.height;
@@ -495,7 +506,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &lensout.id);
+	if(!second) glGenFramebuffers(1, &lensout.id);
 	lensout.width = width/8;
 	lensout.height = height/8;
 	states_BindFramebuffer(lensout);
@@ -505,7 +516,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width/4, height/4);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, lensout.rbid);
 	//create texture here
-	glGenTextures(1, &lensout.textureid[0].id);
+	if(!second) glGenTextures(1, &lensout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensout.textureid[0].id);
 	lensout.textureid[0].width = lensout.width;
 	lensout.textureid[0].height = lensout.height;
@@ -525,7 +536,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &ssaoout.id);
+	if(!second) glGenFramebuffers(1, &ssaoout.id);
 	ssaoout.width = width;
 	ssaoout.height = height;
 	states_BindFramebuffer(ssaoout);
@@ -535,7 +546,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, ssaoout.rbid);
 	//create texture here
-	glGenTextures(1, &ssaoout.textureid[0].id);
+	if(!second) glGenTextures(1, &ssaoout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, ssaoout.textureid[0].id);
 	ssaoout.textureid[0].width = ssaoout.width;
 	ssaoout.textureid[0].height = ssaoout.height;
@@ -555,7 +566,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &bloomout.id);
+	if(!second) glGenFramebuffers(1, &bloomout.id);
 	bloomout.width = width;
 	bloomout.height = height;
 	states_BindFramebuffer(bloomout);
@@ -565,7 +576,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, bloomout.rbid);
 	//create texture here
-	glGenTextures(1, &bloomout.textureid[0].id);
+	if(!second) glGenTextures(1, &bloomout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomout.textureid[0].id);
 	bloomout.textureid[0].width = bloomout.width;
 	bloomout.textureid[0].height = bloomout.height;
@@ -583,7 +594,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &bloomv.id);
+	if(!second) glGenFramebuffers(1, &bloomv.id);
 	bloomv.width = width/4;
 	bloomv.height = height/4;
 	states_BindFramebuffer(bloomv);
@@ -593,7 +604,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width/4, height/4);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, bloomv.rbid);
 	//create texture here
-	glGenTextures(1, &bloomv.textureid[0].id);
+	if(!second) glGenTextures(1, &bloomv.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomv.textureid[0].id);
 	bloomv.textureid[0].width = bloomv.width;
 	bloomv.textureid[0].height = bloomv.height;
@@ -608,7 +619,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 	printf("framebuffer %i texture %i\n", bloomv.id, bloomv.textureid[0].id);
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &bloomh.id);
+	if(!second) glGenFramebuffers(1, &bloomh.id);
 	bloomh.width = width/4;
 	bloomh.height = height/4;
 	states_BindFramebuffer(bloomh);
@@ -618,7 +629,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width/4, height/4);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, bloomh.rbid);
 	//create texture here
-	glGenTextures(1, &bloomh.textureid[0].id);
+	if(!second) glGenTextures(1, &bloomh.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, bloomh.textureid[0].id);
 	bloomh.textureid[0].width = bloomh.width;
 	bloomh.textureid[0].height = bloomh.height;
@@ -637,7 +648,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &dofout.id);
+	if(!second) glGenFramebuffers(1, &dofout.id);
 	dofout.width = width;
 	dofout.height = height;
 	states_BindFramebuffer(dofout);
@@ -647,7 +658,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, dofout.rbid);
 	//create texture here
-	glGenTextures(1, &dofout.textureid[0].id);
+	if(!second) glGenTextures(1, &dofout.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, dofout.textureid[0].id);
 	dofout.textureid[0].width = dofout.width;
 	dofout.textureid[0].height = dofout.height;
@@ -663,7 +674,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &shadow.id);
+	if(!second) glGenFramebuffers(1, &shadow.id);
 	shadow.width = 512;
 	shadow.height = 512;
 	states_BindFramebuffer(shadow);
@@ -673,7 +684,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, shadow.width, shadow.height);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, shadow.rbid);
 	//create texture here
-	glGenTextures(1, &shadow.textureid[0].id);
+	if(!second) glGenTextures(1, &shadow.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, shadow.textureid[0].id);
 	shadow.textureid[0].width = shadow.width;
 	shadow.textureid[0].height = shadow.height;
@@ -696,7 +707,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &lensoutblurh.id);
+	if(!second) glGenFramebuffers(1, &lensoutblurh.id);
 	lensoutblurh.width = width/8;
 	lensoutblurh.height = height/8;
 	states_BindFramebuffer(lensoutblurh);
@@ -706,7 +717,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width/8, height/8);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, lensoutblurh.rbid);
 	//create texture here
-	glGenTextures(1, &lensoutblurh.textureid[0].id);
+	if(!second) glGenTextures(1, &lensoutblurh.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensoutblurh.textureid[0].id);
 	lensoutblurh.textureid[0].width = lensoutblurh.width;
 	lensoutblurh.textureid[0].height = lensoutblurh.height;
@@ -720,7 +731,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 	printf("framebuffer %i texture %i\n", lensoutblurh.id, lensoutblurh.textureid[0].id);
 
 	states_BindFramebuffer(screen);
-	glGenFramebuffers(1, &lensoutblurv.id);
+	if(!second) glGenFramebuffers(1, &lensoutblurv.id);
 	lensoutblurv.width = width/8;
 	lensoutblurv.height = height/8;
 	states_BindFramebuffer(lensoutblurv);
@@ -730,7 +741,7 @@ int otherinit(const unsigned int width, const unsigned int height){
 //	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width/8, height/8);
 //	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, lensoutblurv.rbid);
 	//create texture here
-	glGenTextures(1, &lensoutblurv.textureid[0].id);
+	if(!second) glGenTextures(1, &lensoutblurv.textureid[0].id);
 	glBindTexture(GL_TEXTURE_2D, lensoutblurv.textureid[0].id);
 	lensoutblurv.textureid[0].width = lensoutblurv.width;
 	lensoutblurv.textureid[0].height = lensoutblurv.height;
@@ -742,6 +753,8 @@ int otherinit(const unsigned int width, const unsigned int height){
 	glDrawBuffers(1, buffers);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lensoutblurv.textureid[0].id, 0);
 	printf("framebuffer %i texture %i\n", lensoutblurv.id, lensoutblurv.textureid[0].id);
+
+	if(second)return 0;
 
 
 	screen.width = width;
@@ -825,12 +838,13 @@ int main(int argc, char ** argv){
 		return TRUE;
 	}
 	//init SDL DONE
-	initSDL(width,height);
+//	initSDL(width,height);
+	glfw_init(width, height, 24, 0);
 	//init other shit
 	//init GL
 	glInit();
 
-	otherinit(width, height);
+	otherinit(width, height, 0);
 	//play song
 	BASS_ChannelPlay(bstream, FALSE);
 	float bpm = 160.0;
@@ -839,9 +853,13 @@ int main(int argc, char ** argv){
 	printf("bpm is %f,%f\n", bpm, bpt);
 	float tpb = 1.0/bpt;
 	//main loop
-	unsigned int t, to, framecount = 0, timesincelastfpsupdate = 0;
-	unsigned int accum = 0;
-	to = SDL_GetTicks();
+	double t, to;
+	unsigned int framecount = 0;
+	double timesincelastfpsupdate = 0.0;
+	double accum = 0;
+//	to = SDL_GetTicks();
+	to = glfwGetTime();
+
 //	float lowp = 0.2;
 //	float highp = 0.4;
 //	char ishigh = FALSE;
@@ -853,15 +871,17 @@ int main(int argc, char ** argv){
 	float distthing = 2;
 	float myangle = tempcam.angle[1];
 	while(TRUE){
-		t = SDL_GetTicks();
-		unsigned int delta = t-to;
+//		t = SDL_GetTicks();
+		t = glfwGetTime();
+		double delta = t-to;
 		to = t;
 		timesincelastfpsupdate+=delta;
-		if(timesincelastfpsupdate > 5000){
-			printf("%f fps\n", (float) framecount * 1000.0/(float)timesincelastfpsupdate);
-			timesincelastfpsupdate-=5000;
+		if(timesincelastfpsupdate > 5.0){
+			printf("%f fps\n", (float) framecount /(float)timesincelastfpsupdate);
+			timesincelastfpsupdate-=5.0;
 			framecount = 0;
 		}
+		delta*=1000.0;
 		#define GCTIMESTEP 10
 		accum += delta;
 		bpmaccum += delta;
@@ -1140,7 +1160,9 @@ int main(int argc, char ** argv){
 //		states_useProgram(fsquadshader.programid);
 //		glDrawElements(GL_TRIANGLES, fsquad.numfaces * 3, GL_UNSIGNED_INT, 0);
 		glDisable(GL_BLEND);
-		SDL_GL_SwapBuffers();
+//		SDL_GL_SwapBuffers();
+		glfw_swapBuffers();
+		glfw_checkEvent();
 		framecount++;
 	}
 	return FALSE;

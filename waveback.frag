@@ -1,7 +1,7 @@
 #version 330
 
 uniform sampler2DShadow texture0;
-uniform sampler2DShadow texture1;
+uniform sampler2D texture1;
 uniform vec3 univec31;
 uniform vec3 univec32;
 in vec3 fragposition;
